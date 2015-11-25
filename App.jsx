@@ -3,10 +3,23 @@ App = React.createClass({
  	// 这个mixin使得getMeteorData方法可以使用
   	mixins: [ReactMeteorData],
 
+  	getInitialState(){
+  		return {
+  			hideCompleted:false
+  		}
+  	},
+
   	// 从Tasks集合中获取数据并添加到this.data中
   	getMeteorData(){
+  		let query = {};
+  		if (this.state.hideCompleted) {
+  			// If hide completed is checked, filter tasks
+  			query = {checked:{$ne:true}};
+  		}
+
   		return {
-  			tasks:Tasks.find({},{sort:{createdAt:-1}}).fetch()
+  			tasks:Tasks.find(query,{sort:{createdAt:-1}}).fetch(),
+  			incompleteCount:Tasks.find({checked:{$ne:true}}).count()
   		}
   	},
 
@@ -40,12 +53,26 @@ App = React.createClass({
 		React.findDOMNode(this.refs.textInput).value="";
 	},
 
+	toggleHideCompleted(){
+		this.setState({
+			hideCompleted:! this.state.hideCompleted
+		});
+	},
+
 	render(){
 		return (
 			<div className='container'>
 				<header>
-					<h1>Todo List</h1>
+					<h1>Todo List({this.data.incompleteCount})</h1>
 				</header>
+				<label className='hide-completed'>
+					<input 
+						type='checkbox'
+						readOnly={true}
+						checked={this.state.hideCompleted}
+						onClick={this.toggleHideCompleted} />
+						Hide Completed Tasks
+				</label>
 				{/* 添加开始 */}
     			<form className="new-task" onSubmit={this.handleSubmit} >
 		      	<input
